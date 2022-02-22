@@ -78,6 +78,7 @@ public interface IPaymentHandler {
 
 * Leverage the full power of object orientation and polymorphism to make the implementation of your component as clear and maintainable as possible.
 * Since multiple messages can arrive at the same time the implementation of your component has to be thread safe.
+* Use the Task/async pattern wherever possible and sensible.
 
 ## Tasks
 
