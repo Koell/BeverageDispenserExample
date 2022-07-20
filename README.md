@@ -27,6 +27,8 @@ If any unexpected message (a message that is not expected or not expected at the
 
 ## External services
 
+For the following interfaces, fake implementations should be provided to keep the example simple enough. 
+
 ### IProductDispenser
 
 The following interface is already given:
