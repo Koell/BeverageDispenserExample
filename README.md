@@ -76,6 +76,8 @@ public interface IPaymentHandler {
 
 ## Nonfunctional Requirements
 
+If possible, you should consider the following nonfunctional requirements. If you are for any reason not able implement them, you may skip/ignore them (especially the Task/async part).
+
 * Leverage the full power of object orientation and polymorphism to make the implementation of your component as clear and maintainable as possible.
 * Since multiple messages can arrive at the same time the implementation of your component has to be thread safe.
 * Use the Task/async pattern wherever possible and sensible.
@@ -83,10 +85,14 @@ public interface IPaymentHandler {
 
 ## Tasks
 
-1. Implement the logic described above in some sort of component/module/assembly.
+1. Implement the logic described above in C#. If you are not familiar with C# at all, you might consider implementing the example in a language of your choice. 
 1. Implement a console program that continuously asks the user to enter message strings (empty inputs are ignored) and sends the messages to your component.
-1. Provide unit tests for your component written in a test framework of your choice (but it must be supported by Visual Studio). If you want, using BDD-style (behavior driven design) tests is encouraged but not absolutely required.
+1. If you can, provide unit tests for your component written in a test framework of your choice (but it should be supported by Visual Studio if you are using C#).
 1. Document your solution reasonably (use common sense, what is already clear doesn't have to be documented).
+
+## Notes
+
+If you do not fully understand the requirements, make reasonable assumption. If anything is not clear to you, or you are unable to implement some parts, feel free to change the project to suit your skill level and available time. You can also extend/modify the example if you wish to do so. The primary goal of this exercise is to see some good code written by you.
 
 ## Example
 
