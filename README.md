@@ -7,7 +7,7 @@ Assume your are implementing a software for a beverage vending machine (Getränk
 Implement a component which receives the following string messages and reacts to them:
 | Message | Description |
 |-|-|
-| "1" .. "9" | The digit pressed by the customer. |
+| "0" .. "9" | The digit pressed by the customer. |
 | "PAYMENT_SUCCEEDED" | Sent by the payment module when the payment was successful. |
 | "PAYMENT_FAILED" | Sent by the payment module when the payment failed for whatever reason. |
 | "PRODUCT_DISPENSED" | Sent by the product dispenser when the product was successfully given to the customer. |
