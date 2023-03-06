@@ -6,14 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BeverageDispenser.src
-{
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
-            VendingMachine machine = new VendingMachine(new DummyProductDispenser, new DummyPaymentHandler);
+namespace BeverageDispenser {
+    public class Program {
+        public static void Main(string[] args) {
+            VendingMachine machine = new VendingMachine(new DummyProductDispenser(), new DummyPaymentHandler());
             machine.ResetMachine();
+            while (machine.Running) { }
 
         }
     }
