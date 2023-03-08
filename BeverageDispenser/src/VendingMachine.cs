@@ -1,166 +1,158 @@
-﻿using System.Collections.Concurrent;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Timers;
-using BeverageDispenser.PaymentHandler;
-using BeverageDispenser.ProductDispenser;
-using Timer = System.Timers.Timer;
+﻿using System;
+using System.Threading.Tasks;
 
-namespace BeverageDispenser {
-    public class VendingMachine {
-        private enum State {
-            Idle,
-            WaitingForPayment,
-            Dispense,
-            Error
-        }
-        
-        private static Dictionary<string, string> _validMessages = new Dictionary<string, string>() {
-            { "number", @"^\d$" },
-            { "payment_succeeded", @"^PAYMENT_SUCCEEDED$" },
-            { "payment_failed", @"^PAYMENT_FAILED$" },
-            { "product_dispensed", @"^PRODUCT_DISPENSED$" }
-        };
+namespace BeverageDispenser
+{
+    public class BeverageVendingMachine
+    {
+        private readonly IProductDispenser productDispenser;
+        private readonly IPaymentHandler paymentHandler;
+        private int productId = -1;
+        private DateTime lastDigitTime = DateTime.MinValue;
+        private State state = State.Idle;
 
-        private readonly ConcurrentQueue<string> _messageQueue = new ConcurrentQueue<string>();
-        private State _state = State.Idle;
-        private string _productKey = string.Empty;
-        private string _paymentInfo = string.Empty;
-        private IProductDispenser _productDispenser;
-        private IPaymentHandler _paymentHandler;
-        private readonly Timer _timerIdleTimeout = new Timer(1000);
-        
-        public bool Running { get; } = true;
-
-
-        public VendingMachine(IProductDispenser productDispenser, IPaymentHandler paymentHandler) {
-            _productDispenser = productDispenser;
-            _paymentHandler = paymentHandler;
-            _timerIdleTimeout.Elapsed += new ElapsedEventHandler(OnIdleTimeoutEvent);
+        public BeverageVendingMachine(IProductDispenser productDispenser, IPaymentHandler paymentHandler)
+        {
+            this.productDispenser = productDispenser;
+            this.paymentHandler = paymentHandler;
+            Console.WriteLine("Please select a product");
         }
 
-        public void ResetMachine() {
-            ChangeState(State.Idle);
-            _productKey = string.Empty;
-            _paymentInfo = string.Empty;
-            Task.Run(ReadAsync);
-        }
-
-        private async Task ReadAsync() {
-            string message = await Console.In.ReadLineAsync() ?? string.Empty;;
-            if (ValidateMessage(message)) {
-                SendMessage(message);
-            } else {
-                await Task.Run(ReadAsync);
-            }
-        }
-
-        private bool ValidateMessage(string message) {
-            return _validMessages.Values.Any(pattern => Regex.IsMatch(message, pattern));
-        }
-
-        private void SendMessage(string message) {
-            _messageQueue.Enqueue(message);
-
-            Task.Run(ProcessMessageQueue);
-        }
-
-        private void ProcessMessageQueue() {
-            while (_messageQueue.TryDequeue(out string? message)) {
-                switch (_state) {
-                    case State.Idle:
-                        HandleIdleMessage(message);
-                        break;
-                    case State.WaitingForPayment:
-                        HandlePaymentMessage(message);
-                        break;
-                    case State.Dispense:
-                    case State.Error:
-                        break;
-
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        private void HandleIdleMessage(string message) {
-            if (Regex.IsMatch(message, _validMessages["number"])) {
-                _productKey += message;
-                if (_productKey.Length == 1) {
-                    _timerIdleTimeout.Start();
-                } else {
-                    _timerIdleTimeout.Stop();
-                    ChangeState(State.WaitingForPayment);
-                }
-            }
-            Task.Run(ReadAsync);
-        }
-
-        private void OnIdleTimeoutEvent(Object? sender, ElapsedEventArgs e) {
-            if (_state == State.Idle && _productKey.Length == 1) {
-                ResetMachine();
-            }
-        }
-
-        private void HandlePaymentMessage(string message) {
-            if (Regex.IsMatch(message, _validMessages["number"])) {
-                _paymentInfo += message;
-                if (_paymentInfo.Length == 2) {
-                    
-                    Task paymentTask = _paymentHandler.StartPayment(int.Parse(_productKey));
-                    bool paymentTaskIsCanceled = paymentTask.IsCanceled;
-
-                    if (!paymentTaskIsCanceled) {
-                        ChangeState(State.Dispense);
-                        
-                    }
-                   
-                }
-            }
-            Task.Run(ReadAsync);
-        }
- 
-        private void ChangeState(State newState) {
-            string oldState = _state.ToString(); 
-            string? message = null;
-            bool valid = false;
-            
-            switch (newState) {
+        public void HandleMessage(string message)
+        {
+            switch (state)
+            {
                 case State.Idle:
-                    message = "Please select a product";
-                    valid = true;
+                    if (int.TryParse(message, out var digit))
+                    {
+                        HandleDigit(digit);
+                    }
+                    else
+                    {
+                        GoToErrorState();
+                    }
                     break;
                 case State.WaitingForPayment:
-                    if (_state == State.Idle) {
-                        message = "Please complete your payment";
-                        valid = true;
+                    switch (message)
+                    {
+                        case "PAYMENT_SUCCEEDED":
+                            productDispenser.Dispense(productId).ContinueWith(_ =>
+                            {
+                                Console.WriteLine($"Your product {productId} is on your way");
+                                productId = -1;
+                                state = State.Idle;
+                                Console.WriteLine("Please select a product");
+                            });
+                            break;
+                        case "PAYMENT_FAILED":
+                            Console.WriteLine("Payment failed");
+                            productId = -1;
+                            state = State.Idle;
+                            Console.WriteLine("Please select a product");
+                            break;
+                        case "PRODUCT_DISPENSED":
+                            state = State.Idle;
+                            break;
+                        default:
+                            // Ignore unexpected messages
+                            break;
                     }
                     break;
-                case State.Dispense:
-                    if (_state == State.WaitingForPayment) {
-                        message = $"Your product {_productKey} is on your way";
-                        valid = true;
-                    }
+                default:
+                    GoToErrorState();
                     break;
-                case State.Error:
-                    break;
-            }
-            if (valid) {
-                _state = newState;
-                if (!string.IsNullOrEmpty(message)) {
-                    Console.WriteLine(message);
-                }
-            } else {
-                Logger.Instance?.LogError($"Invalid state change {oldState} -> {newState.ToString()}. Resetting Machine");
-                _state = State.Error;
-                ResetMachine();
             }
         }
-        private void HandleDispenseMessage(string message) { }
 
+        private void HandleDigit(int digit)
+        {
+            var currentTime = DateTime.Now;
+            if (productId == -1)
+            {
+                // First digit entered
+                productId = digit;
+                lastDigitTime = currentTime;
+                Task.Delay(1000).ContinueWith(_ =>
+                {
+                    if (productId != -1 && DateTime.Now - lastDigitTime > TimeSpan.FromSeconds(1))
+                    {
+                        productId = -1;
+                        Console.WriteLine("Please select a product");
+                    }
+                });
+            }
+            else
+            {
+                // Second digit entered
+                productId = productId * 10 + digit;
+                Console.WriteLine("Please complete your payment");
+                state = State.WaitingForPayment;
+                paymentHandler.StartPayment(productId).ContinueWith(task =>
+                {
+                    if (task.Result == PaymentResult.Succeeded)
+                    {
+                        HandleMessage("PAYMENT_SUCCEEDED");
+                    }
+                    else
+                    {
+                        HandleMessage("PAYMENT_FAILED");
+                    }
+                });
+            }
+        }
+
+        private void GoToErrorState()
+        {
+            Console.WriteLine("Out of Service");
+            productId = -1;
+            state = State.Idle;
+        }
+
+        private enum State
+        {
+            Idle,
+            WaitingForPayment
+        }
     }
 
+    public interface IProductDispenser
+    {
+        Task Dispense(int productId);
+    }
 
+    public interface IPaymentHandler
+    {
+        Task<PaymentResult> StartPayment(int productId);
+    }
+
+    public enum PaymentResult
+    {
+        Succeeded,
+        Failed
+    }
+
+    public class ProductDispenser : IProductDispenser
+    {
+        public async Task Dispense(int productId)
+        {
+            await Task.Delay(500); // simulate the time to dispense the product
+            Console.WriteLine($"Product {productId} has been dispensed.");
+        }
+    }
+
+    public class PaymentHandler : IPaymentHandler
+    {
+        private readonly Random random = new Random();
+
+        public async Task<PaymentResult> StartPayment(int productId)
+        {
+            PaymentResult result = PaymentResult.Failed;
+            await Task.Delay(500); // simulate delay
+            if (random.Next(0, 10) > 3) {
+                result = PaymentResult.Succeeded;
+            }
+
+            return result;
+        }
+    }
 }

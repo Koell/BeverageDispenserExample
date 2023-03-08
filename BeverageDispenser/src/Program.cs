@@ -1,18 +1,20 @@
-﻿using BeverageDispenser.PaymentHandler;
-using BeverageDispenser.ProductDispenser;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 
-namespace BeverageDispenser {
-    public class Program {
-        public static void Main(string[] args) {
-            VendingMachine machine = new VendingMachine(new DummyProductDispenser(), new DummyPaymentHandler());
-            machine.ResetMachine();
-            while (machine.Running) { }
+namespace BeverageDispenser
+{
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            IPaymentHandler handlerPayment = new PaymentHandler();
+            IProductDispenser handlerProduct = new ProductDispenser();
+            var vendingMachine = new BeverageVendingMachine(handlerProduct, handlerPayment);
 
+            while (true)
+            {
+                var message = Console.ReadLine();
+                vendingMachine.HandleMessage(message);
+            }
         }
     }
 }

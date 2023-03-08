@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeverageDispenser", "BeverageDispenser.csproj", "{906C2506-3085-4928-961A-929C03DD6FEC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BeverageDispenser", "BeverageDispenser.csproj", "{906C2506-3085-4928-961A-929C03DD6FEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeverageDispenserTests", "..\BeverageDispenserTests\BeverageDispenserTests.csproj", "{315D1D03-1E94-4EAD-B380-5BB1B35F84DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{906C2506-3085-4928-961A-929C03DD6FEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{906C2506-3085-4928-961A-929C03DD6FEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{906C2506-3085-4928-961A-929C03DD6FEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{315D1D03-1E94-4EAD-B380-5BB1B35F84DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{315D1D03-1E94-4EAD-B380-5BB1B35F84DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{315D1D03-1E94-4EAD-B380-5BB1B35F84DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{315D1D03-1E94-4EAD-B380-5BB1B35F84DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

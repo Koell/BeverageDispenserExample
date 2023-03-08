@@ -1,4 +1,4 @@
-# Green Donkey Beverage Dispenser
+# [Commercial-Space] Beverage Dispenser
 
 Assume your are implementing a software for a beverage vending machine (Getränkeautomat) for the beverage company *Green Donkey*. Every product has a number (10-99), and a customer can choose which beverage she wants by typing in that number in the integrated keypad.
 
